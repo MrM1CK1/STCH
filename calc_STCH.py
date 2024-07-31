@@ -10,11 +10,9 @@ import tifffile as tf
 import rasterio
 import json
 import matplotlib.pyplot as plt
-import sys
 from osgeo import gdal, osr
 from numpy import log
 from rasterio.mask import mask
-import fiona
 
 
 print('Import done.')
@@ -249,12 +247,12 @@ def Rn(LSE,LST,Albedo,Rsin, out_folder, name = "Rn"):
     return result_Rn
 
 
-#Ground Heat Flux
+#Ground Heat Flux - SEBS
 #Rn = Net Radiation
 #VegC = Vegetation Cover
 #https://www.mdpi.com/2072-4292/14/21/5629
 #𝐺0=𝑅𝑛⋅[Γ𝑐+(1−𝑓𝑐)⋅(Γ𝑠−Γ𝑐)]
-def GHFlux_1(Rn, VegC, out_folder, name = "GHE"):
+def GHFlux_1(Rn, VegC, out_folder, name = "GHF"):
     Rn_arr = np.array(tf.imread(Rn))
     VegC_arr = np.array(tf.imread(VegC))
     
@@ -266,24 +264,37 @@ def GHFlux_1(Rn, VegC, out_folder, name = "GHE"):
     
     return result_GHE
 
-
-def GHFlux_2(albedo, lst,ndvi, totalRadiation, out_folder, name = "GHE"):
+#Ground Heat Flux - SEBAL
+#Albedo = Albedo
+#B10_l1 = Band 10
+#LST = Land Surface Temperature
+#NDVI = Normalized Difference Vegetation Index
+#totalRadiation = Total Radiation
+def GHFlux_2(albedo, B10_l1,lst, ndvi, totalRadiation, out_folder, name = "GHF_2"):
     albedo_arr = np.array(tf.imread(albedo))
     lst_arr = np.array(tf.imread(lst))
     totalRadiation_arr = np.array(tf.imread(totalRadiation))
     ndvi_arr = np.array(tf.imread(ndvi))
+    B10_arr = np.array(tf.imread(B10_l1))
+
+    result_ghf_a = (0.0038 * albedo_arr) + (0.0074 * albedo_arr)
+    result_ghf_b = (1 - 0.98) * ndvi_arr
+    result_ghf_c = (np.power(result_ghf_a,2) * np.power(result_ghf_b,4)) * totalRadiation_arr
+    result_ghf_d = albedo_arr * result_ghf_c
+    calc_GHE = np.divide(lst_arr, result_ghf_d)
 
   # Calculate G
-    calc_GHE = (lst_arr/albedo_arr) * ((0.0038*albedo_arr)+(0.0074*(albedo_arr**2))) * (1-(0.98*ndvi_arr**4))
-    
+    calc_GHE = (B10_arr)*albedo_arr * (0.0038*albedo_arr + 0.0074*albedo_arr**2) * (1-0.98*ndvi_arr**4)*totalRadiation_arr
+
     result_GHE = os.path.join(out_folder, name + ".TIF")
     
-    GeoRef(calc_GHE, lst, result_GHE)
+    GeoRef(calc_GHE, B10_l1, result_GHE)
     
     return result_GHE
 
 
-
+#Ground Heat Flux - Net Radiation
+#Rn = Net Radiation
 def Gr(RN,out_folder, name = "G"):
     RN_arr = np.array(tf.imread(RN))
     
