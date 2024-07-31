@@ -14,7 +14,6 @@ from scipy import ndimage
 from shapely.geometry import box
 
 import calc_STCH
-import sys
 
 
 SCRIPT_DIR = os.path.dirname((os.path.abspath(__file__)))   #Directory of the script
@@ -149,8 +148,8 @@ for date in landsate_date:
 
 
     Rn = calc_STCH.Rn(Emmisivity, LSTemperature, Albedo_liang, Rsin_value, OUT_FOLDER, 'Rn_' + date)
-    GroundHeatFlux = calc_STCH.GHFlux_1(Rn, VegC, OUT_FOLDER, 'GHF_' + date)
-    GroundHeatFlux_2 = calc_STCH.GHFlux_2(Albedo_liang,LSTemperature, ndvi_TIF,TOA_radiance_B10_L1, OUT_FOLDER, 'GHF_2_' + date)
-    Gr = calc_STCH.Gr(Rn, OUT_FOLDER, 'G_' + date)
+    GroundHeatFlux = calc_STCH.GHFlux_1(Rn, VegC, OUT_FOLDER, 'GHF_SEBS_' + date)
+    GroundHeatFlux_2 = calc_STCH.GHFlux_2(Albedo_liang,b10_l1,LSTemperature, ndvi_TIF,TOA_radiance_B10_L1, OUT_FOLDER, 'GHF_SEBAL_' + date)
+    Gr = calc_STCH.Gr(Rn, OUT_FOLDER, 'GHF_Rn_' + date)
 
 pprint('All done and in order')
